@@ -1,0 +1,43 @@
+CREATE DATABASE ecommerce;
+
+USE ecommerce;
+CREATE TABLE products (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100),
+    model VARCHAR(100),
+    price DECIMAL(10, 2)
+);
+INSERT INTO products (name, model, price) VALUES 
+('Laptop', 'Dell Inspiron', 50000.00),
+('Smartphone', 'Samsung Galaxy', 20000.00),
+('Headphones', 'Boat Rockerz', 1500.00);
+INSERT INTO products (name, model, price) VALUES 
+('Samsung Galaxy S21', 'SM-G991B', 699.99),
+('Apple iPhone 13', 'A2633', 799.00),
+('OnePlus 11', 'CPH2447', 649.00),
+('Google Pixel 7', 'GQML3', 599.99),
+('Xiaomi Redmi Note 12', '22111317I', 229.99);
+
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    password VARCHAR(100) NOT NULL
+);
+
+INSERT INTO users (name, password) VALUES
+('dinesh', 'pass123'),
+('priya', 'priya456'),
+('kumar', 'kumar789'),
+('ravi', 'ravi321'),
+('anita', 'anita999');
+
+CREATE TABLE cart (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    product_id INT,
+    quantity INT DEFAULT 1,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+
+
