@@ -6,15 +6,75 @@
 <head>
     <title>Adding to Cart</title>
     <style>
-        /* your existing CSS... */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            padding: 30px;
+            text-align: center;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .success-message,
+        .error-message {
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .button {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            margin: 10px 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .button:hover {
+            background-color: #0056b3;
+        }
+
+        p {
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
+
 <div class="container">
 <%
     int id = Integer.parseInt(request.getParameter("id"));
     int qty = Integer.parseInt(request.getParameter("qty"));
-    Integer userId = (Integer) session.getAttribute("userId"); // null if guest
+    Integer userId = (Integer) session.getAttribute("userId");
 
     Connection con = products.db.DBUtil.getConnection();
     PreparedStatement ps = con.prepareStatement("SELECT * FROM products WHERE id=?");
@@ -26,7 +86,6 @@
         String model = rs.getString("model");
         double price = rs.getDouble("price");
 
-        // Store in session cart
         Map<Integer, Map<String, Object>> cart = (Map<Integer, Map<String, Object>>) session.getAttribute("cart");
         if (cart == null) cart = new HashMap<>();
 
@@ -41,9 +100,9 @@
             item.put("qty", qty);
             cart.put(id, item);
         }
+
         session.setAttribute("cart", cart);
 
-        // ✅ Store in DB if user is logged in
         if (userId != null) {
             PreparedStatement psCheck = con.prepareStatement("SELECT quantity FROM cart WHERE user_id=? AND product_id=?");
             psCheck.setInt(1, userId);
@@ -51,7 +110,6 @@
             ResultSet checkRs = psCheck.executeQuery();
 
             if (checkRs.next()) {
-                // Already in cart → update quantity
                 int existingQty = checkRs.getInt("quantity");
                 PreparedStatement psUpdate = con.prepareStatement("UPDATE cart SET quantity=? WHERE user_id=? AND product_id=?");
                 psUpdate.setInt(1, existingQty + qty);
@@ -60,7 +118,6 @@
                 psUpdate.executeUpdate();
                 psUpdate.close();
             } else {
-                // Not in cart → insert
                 PreparedStatement psInsert = con.prepareStatement("INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, ?)");
                 psInsert.setInt(1, userId);
                 psInsert.setInt(2, id);
@@ -71,7 +128,6 @@
             checkRs.close();
             psCheck.close();
         } else {
-            // Guest logic → cookie-based session
             String guestID = null;
             Cookie[] cookies = request.getCookies();
             for (Cookie c : cookies) {
@@ -83,30 +139,26 @@
             if (guestID == null) {
                 guestID = UUID.randomUUID().toString();
                 Cookie cookie = new Cookie("guestID", guestID);
-                cookie.setMaxAge(60 * 60 * 24 * 30); // 30 days
+                cookie.setMaxAge(60 * 60 * 24 * 30);
                 response.addCookie(cookie);
             }
             application.setAttribute(guestID, cart);
         }
 %>
-
-    <!-- Success Message -->
     <div class="success-message">
         <h2>Item Added to Cart</h2>
         <p>"<%= name %>" (Qty: <%= qty %>) has been added to your shopping cart.</p>
-        <a href="index.jsp" class="button">Continue Shopping</a>
-        <a href="cart.jsp" class="button">View Cart</a>
     </div>
-
+    <a href="index.jsp" class="button">Continue Shopping</a>
+    <a href="cart.jsp" class="button">View Cart</a>
 <%
     } else {
 %>
-    <!-- Error Message -->
     <div class="error-message">
         <h2>Product Not Found</h2>
         <p>The product you tried to add is no longer available.</p>
-        <a href="index.jsp" class="button">Back to Products</a>
     </div>
+    <a href="index.jsp" class="button">Back to Products</a>
 <%
     }
     rs.close();
@@ -114,5 +166,6 @@
     con.close();
 %>
 </div>
+
 </body>
 </html>
